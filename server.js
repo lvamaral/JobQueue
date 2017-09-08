@@ -15,6 +15,15 @@ var port = process.env.API_PORT || 3001;
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+//to prevent errors from Cross Origin Resource Sharing, set headers to allow CORS with middleware
+app.use(function(req, res, next) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS,POST,PUT,DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers');
+  next();
+});
+
 //DB config using mlab
 var mongoDB = 'mongodb://lucas:lucas123@ds129344.mlab.com:29344/job_queue';
 mongoose.connect(mongoDB, { useMongoClient: true });
@@ -27,7 +36,11 @@ app.get('/', (req,res)=> {
 });
 
 app.post('/jobs', (req,res) => {
+  res.send("OK");
+  //PUT request into queue
 
+  console.log(req.body.url);
+  console.log("test");
 });
 
 //
