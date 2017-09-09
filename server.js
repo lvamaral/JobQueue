@@ -3,6 +3,7 @@ var express = require('express');
 var mongoose = require('mongoose');
 var bodyParser = require('body-parser');
 var Job = require('./model/jobs');
+var axios = require('axios');
 
 //create instances
 var app = express();
@@ -35,10 +36,18 @@ app.get('/', (req,res)=> {
   res.json({ message: 'API Initialized!'});
 });
 
+//Gets all current jobs
+app.get('/jobs', (req,res)=> {
+  Job.find(function(err, jobs) {
+     if (err)
+       res.send(err);
+     res.json(jobs);
+   });
+});
+
 app.post('/jobs', (req,res) => {
   res.send("OK");
-
-  //PUT request into queue
+  //Adds request to queue
   kueURL(req.body.url);
 });
 
@@ -68,7 +77,6 @@ function kueURL(url){
 
 queue.process('fetch', (job,done)=>{
   //ADD as PENDING
-  console.log("this job ran", job.data.url);
   addPendingJob(job,done);
 
 });
@@ -77,17 +85,37 @@ queue.process('fetch', (job,done)=>{
 function addPendingJob(job,done){
   var fetchJob = new Job();
   fetchJob.url = job.data.url;
+  fetchJob.id = job.id;
 
   fetchJob.save((err)=>{
     if (err) {
       console.log(err);
     } else {
-      console.log("Job Added to DB");
-      done();
+      console.log(`Job ${job.id} added to DB as pending`);
+      processPendingJob(fetchJob, done);
     }
-
   });
+}
 
+function processPendingJob(dbJob, done) {
+  axios.get(dbJob.url)
+  .then( (response) => {
+    console.log("api call got", response);
+    updateJobStatus(dbJob, response);
+  })
+  .catch(function (error) {
+    console.log("this",error);
+  });
+  done();
+}
+
+function updateJobStatus(dbJob, response) {
+  Job.findById(dbJob.id, function(err, job) {
+      job.status = "completed";
+      job.result = response.data;
+      job.save();
+      console.log(`Job ${dbJob.id} is now completed`);
+    });
 }
 
 
