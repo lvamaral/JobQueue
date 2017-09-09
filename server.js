@@ -36,7 +36,7 @@ app.get('/', (req,res)=> {
   res.json({ message: 'API Initialized!'});
 });
 
-//Gets all current jobs
+//gets all current jobs
 app.get('/jobs', (req,res)=> {
   Job.find(function(err, jobs) {
      if (err)
@@ -45,19 +45,18 @@ app.get('/jobs', (req,res)=> {
    });
 });
 
+//adds a job request to queue
 app.post('/jobs', (req,res) => {
   res.send("OK");
-  //Adds request to queue
   kueURL(req.body.url);
 });
-
 
 //Kue (Queue System)
 var kue = require('kue');
 var queue = kue.createQueue();
 
 queue.on('job enqueue', function(id, type){
-  console.log( 'Job %s got queued of type %s', id, type );
+  console.log( 'Job %s got queued.', id);
 });
 
 function kueURL(url){
@@ -65,33 +64,37 @@ function kueURL(url){
     title: 'Fetch Job',
     url: url
   });
-  job.on('complete', function(result){
-    //CHANGE STATUS ON DB
-    console.log('Job completed with data ', result);
-  });
-  job.on('failed', function(errorMessage){
-    //CHANGE STATUS ON DB
-    console.log('Job failed');
-  }).save();
+  job.delay(500);
+  job.save();
 }
 
-queue.process('fetch', (job,done)=>{
-  //ADD as PENDING
+queue.process('fetch', (job,done) => {
+  //Add Job as PENDING, to be processed
   addPendingJob(job,done);
-
 });
 
-//
+//Deletes completed jobs from the Kue
+queue.on('job complete', function(id, result){
+  kue.Job.get(id, function(err, job){
+    if (err) return;
+    job.remove(function(err){
+      if (err) throw err;
+      console.log('Job #%d is completed and removed from the queue.', job.id);
+    });
+  });
+});
+
+//Job Processing Functions
 function addPendingJob(job,done){
   var fetchJob = new Job();
   fetchJob.url = job.data.url;
-  fetchJob.id = job.id;
+  fetchJob.qid = job.id;
 
   fetchJob.save((err)=>{
     if (err) {
-      console.log(err);
+      console.log("couldnt save", err);
     } else {
-      console.log(`Job ${job.id} added to DB as pending`);
+      console.log(`Job ${job.id} (url: ${job.data.url}) added to DB as pending`);
       processPendingJob(fetchJob, done);
     }
   });
@@ -100,25 +103,27 @@ function addPendingJob(job,done){
 function processPendingJob(dbJob, done) {
   axios.get(dbJob.url)
   .then( (response) => {
-    console.log("api call got", response);
     updateJobStatus(dbJob, response);
   })
-  .catch(function (error) {
-    console.log("this",error);
+  .catch( (error) => {
+    console.log("Couldn't fetch URL");
+    updateJobStatus(dbJob, "failed");
   });
   done();
 }
 
 function updateJobStatus(dbJob, response) {
   Job.findById(dbJob.id, function(err, job) {
-      job.status = "completed";
-      job.result = response.data;
+      if (response !== "failed") {
+        job.status = "completed";
+        job.result = response.data;
+      } else {
+        job.status = "failed";
+        job.message = "Could not get URL";
+      }
       job.save();
-      console.log(`Job ${dbJob.id} is now completed`);
     });
 }
-
-
 
 //
 app.listen(port, function() {

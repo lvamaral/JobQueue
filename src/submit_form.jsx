@@ -8,10 +8,15 @@ class SubmitForm extends React.Component {
   }
 
   handleSubmit(e){
-    var _this = this;
     e.preventDefault();
+    this.state.url.split(',').forEach( (url) => {
+      this.postJob(url.trim());
+    });
+  }
 
-    axios.post('http://localhost:3001/jobs', _this.state)
+  postJob(url){
+    var _this = this;
+    axios.post('http://localhost:3001/jobs', {url: url})
     .then(function (response) {
       _this.setState({url: ""});
     })
@@ -29,6 +34,7 @@ class SubmitForm extends React.Component {
     return (
       <div>
         <p>Insert a URL (or multiple URLs separated by commas) to start a job.</p>
+        <p>Ex: http://www.yahoo.com/</p>
         <form onSubmit={this.handleSubmit.bind(this)}>
           <input type="text" value={this.state.url} onChange={this.handleChange.bind(this)} />
           <input type="submit" value="Submit"/>
