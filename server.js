@@ -2,7 +2,7 @@
 var express = require('express');
 var mongoose = require('mongoose');
 var bodyParser = require('body-parser');
-var Jobs = require('./model/jobs');
+var Job = require('./model/jobs');
 
 //create instances
 var app = express();
@@ -37,11 +37,60 @@ app.get('/', (req,res)=> {
 
 app.post('/jobs', (req,res) => {
   res.send("OK");
-  //PUT request into queue
 
-  console.log(req.body.url);
-  console.log("test");
+  //PUT request into queue
+  kueURL(req.body.url);
 });
+
+
+//Kue (Queue System)
+var kue = require('kue');
+var queue = kue.createQueue();
+
+queue.on('job enqueue', function(id, type){
+  console.log( 'Job %s got queued of type %s', id, type );
+});
+
+function kueURL(url){
+  var job = queue.create('fetch', {
+    title: 'Fetch Job',
+    url: url
+  });
+  job.on('complete', function(result){
+    //CHANGE STATUS ON DB
+    console.log('Job completed with data ', result);
+  });
+  job.on('failed', function(errorMessage){
+    //CHANGE STATUS ON DB
+    console.log('Job failed');
+  }).save();
+}
+
+queue.process('fetch', (job,done)=>{
+  //ADD as PENDING
+  console.log("this job ran", job.data.url);
+  addPendingJob(job,done);
+
+});
+
+//
+function addPendingJob(job,done){
+  var fetchJob = new Job();
+  fetchJob.url = job.data.url;
+
+  fetchJob.save((err)=>{
+    if (err) {
+      console.log(err);
+    } else {
+      console.log("Job Added to DB");
+      done();
+    }
+
+  });
+
+}
+
+
 
 //
 app.listen(port, function() {
