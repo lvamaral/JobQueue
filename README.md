@@ -8,6 +8,8 @@ User submits www.google.com to your endpoint. The user gets back a job id. Your 
 
 ## Overview
 
+![sample](public/JobQueue.gif)
+
 My solution to this challenge was to build a frontend where the user can start one or multiple jobs at a time, and see their processing and results in real time. My server side job queue runs in a FIFO order, though completion of jobs do not necessarily follow order of processing. Clicking on a job will send a GET request to the server, and then display the results in the realtime frontend dashboard.
 
 ## Technologies
@@ -37,4 +39,4 @@ On the frontend, I had just two components: a submit form, and a job list. The s
 
 Clicking on a job sends a GET request to job/:id, displaying the results on the right hand side of the dashboard.
 
-Overall this was a very fun challenge, and I could see myself using the concept of a job queue dashboard in other scenarios, such as logging the time it takes for database requests to complete. 
+Overall this was a very fun challenge, and I could see myself using the concept of a job queue dashboard in other scenarios, such as logging the time it takes for database requests to complete.
