@@ -46,25 +46,24 @@ class JobList extends React.Component {
      } else if (status === "failed"){
        return(<p className="red">{status}</p>);
      } else {
-        return(<p>{status}</p>);
+       return(<p>{status}</p>);
      }
    }
 
    getResults(id){
      axios.get(`http://localhost:3001/jobs/${id}`)
      .then(res => {
-       var id = res.data[0].qid;
+       var qid = res.data[0].qid;
        var status = res.data[0].status;
        var created = res.data[0].createdAt;
        var url = res.data[0].url;
        var result = (status === "completed" ? res.data[0].result : res.data[0].message);
-       this.setState({result: {id: id, status: status, created: created, url: url, result: result}});
-
+       this.setState({result: {id: qid, status: status, created: created, url: url, result: result}});
      }).catch(err => console.log("Couldnt connect to server."));
    }
 
    displayResults(){
-     var data = this.state.result
+     var data = this.state.result;
      if (data !== "") {
        return (
          <div>
@@ -74,9 +73,8 @@ class JobList extends React.Component {
            <p>Result:</p>
            <p>{data.result}</p>
          </div>
-       )
+       );
      }
-
    }
 
   render(){

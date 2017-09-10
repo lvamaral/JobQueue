@@ -30,6 +30,7 @@ var mongoDB = 'mongodb://lucas:lucas123@ds129344.mlab.com:29344/job_queue';
 mongoose.connect(mongoDB, { useMongoClient: true });
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+//
 
 //ROUTES
 app.get('/', (req,res)=> {
@@ -45,6 +46,7 @@ app.get('/jobs', (req,res)=> {
    });
 });
 
+//gets one job
 app.get('/jobs/:id', (req,res)=> {
   Job.find({ "qid" :  req.params.id }, function(err, job) {
      if (err)
@@ -53,11 +55,12 @@ app.get('/jobs/:id', (req,res)=> {
    });
 });
 
-//adds a job request to queue
+//adds a job request to the queue
 app.post('/jobs', (req,res) => {
   res.send("OK");
   kueURL(req.body.url);
 });
+//
 
 //Kue (Queue System)
 var kue = require('kue');
@@ -96,18 +99,17 @@ function addPendingJob(job,done){
   var fetchJob = new Job();
   fetchJob.url = job.data.url;
   fetchJob.qid = job.id;
-
   fetchJob.save((err)=>{
     if (err) {
       console.log("couldnt save", err);
     } else {
       console.log(`Job ${job.id} (url: ${job.data.url}) added to DB as pending`);
       processPendingJob(fetchJob, done);
-
     }
   });
 }
 
+//tries processing the job, and updates the status depending on success
 function processPendingJob(dbJob, done) {
   axios.get(dbJob.url)
   .then( (response) => {
@@ -132,8 +134,9 @@ function updateJobStatus(dbJob, response) {
       job.save();
     });
 }
-
 //
+
+//Setups app
 app.listen(port, function() {
   console.log(`App running on port ${port}`);
 });
