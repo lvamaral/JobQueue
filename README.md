@@ -16,7 +16,7 @@ My solution to this challenge was to build a frontend where the user can start o
 
 The frontend was build with React. The backend is a Node/Express server, using Kue.js to handle queue processing. Kue is backed by Redis to handle the queue. The MongoDB database is hosted online at mLab for easier setup.
 
-The Axios library was used for GET/POST requests, and foremon and nodemon for easier refreshing of the React client and the server.
+The Axios library was used for GET/POST requests, and foreman and nodemon for easier refreshing of the React client and the server.
 
 ## Setup
 
