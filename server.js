@@ -45,6 +45,14 @@ app.get('/jobs', (req,res)=> {
    });
 });
 
+app.get('/jobs/:id', (req,res)=> {
+  Job.find({ "qid" :  req.params.id }, function(err, job) {
+     if (err)
+       res.send(err);
+     res.json(job);
+   });
+});
+
 //adds a job request to queue
 app.post('/jobs', (req,res) => {
   res.send("OK");
@@ -64,7 +72,6 @@ function kueURL(url){
     title: 'Fetch Job',
     url: url
   });
-  job.delay(500);
   job.save();
 }
 
@@ -96,6 +103,7 @@ function addPendingJob(job,done){
     } else {
       console.log(`Job ${job.id} (url: ${job.data.url}) added to DB as pending`);
       processPendingJob(fetchJob, done);
+
     }
   });
 }

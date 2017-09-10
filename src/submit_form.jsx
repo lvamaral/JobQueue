@@ -33,7 +33,7 @@ class SubmitForm extends React.Component {
   render(){
     return (
       <div>
-        <p>Insert a URL (or multiple URLs separated by commas) to start a job.</p>
+        <p>Insert a URL (or multiple URLs separated by commas) to start a job. Please use the format http(s)://www.something.com.</p>
         <p>Ex: http://www.yahoo.com/</p>
         <form onSubmit={this.handleSubmit.bind(this)}>
           <input type="text" value={this.state.url} onChange={this.handleChange.bind(this)} />
